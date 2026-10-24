@@ -96,7 +96,7 @@ def test_end_to_end_stdin(input_file: str, expected_file: str, args: list[str], 
         args = [nbstripout_exe()] + args
         if verify:
             args.append('--verify')
-        pc = run(args, stdin=f, stdout=PIPE, text=True)
+        pc = run(args, stdin=f, stdout=PIPE, text=True, check=True)
         output = pc.stdout
 
     if verify:
@@ -123,7 +123,7 @@ def test_end_to_end_file(input_file: str, expected_file: str, args: list[str], t
     args = [nbstripout_exe(), p] + args
     if verify:
         args.append('--verify')
-    pc = run(args, stdout=PIPE, text=True)
+    pc = run(args, stdout=PIPE, text=True, check=True)
 
     output = pc.stdout.strip()
     if verify:
@@ -150,7 +150,7 @@ def test_dry_run_stdin(input_file: str, extra_args: list[str], any_change: bool,
         args = [nbstripout_exe(), '--dry-run'] + extra_args
         if verify:
             args.append('--verify')
-        pc = run(args, stdin=f, stdout=PIPE, text=True)
+        pc = run(args, stdin=f, stdout=PIPE, text=True, check=True)
         output = pc.stdout
 
     assert output == (expected if any_change else '')
@@ -168,7 +168,7 @@ def test_dry_run_args(input_file: str, extra_args: list[str], any_change: bool, 
     ] + extra_args
     if verify:
         args.append('--verify')
-    pc = run(args, stdout=PIPE, text=True)
+    pc = run(args, stdout=PIPE, text=True, check=True)
     output = pc.stdout
 
     assert expected_regex.match(output) if any_change else output == ''
@@ -178,7 +178,7 @@ def test_dry_run_args(input_file: str, extra_args: list[str], any_change: bool, 
 @pytest.mark.parametrize('input_file, expected_errs, extra_args', ERR_OUTPUT_CASES)
 def test_make_errors(input_file: str, expected_errs: list[str | Pattern], extra_args: list[str]):
     with open(NOTEBOOKS_FOLDER / input_file, mode='r') as f:
-        pc = run([nbstripout_exe(), '--dry-run'] + extra_args, stdin=f, stderr=PIPE, text=True)
+        pc = run([nbstripout_exe(), '--dry-run'] + extra_args, stdin=f, stderr=PIPE, text=True, check=True)
         err_output = pc.stderr
 
     for e in expected_errs:
@@ -192,7 +192,7 @@ def test_nochange_notebook_unchanged():
     ipynb_file = NOTEBOOKS_FOLDER / 'test_nochange.ipynb'
     ipynb_mtime_before = ipynb_file.stat().st_mtime_ns
 
-    run([nbstripout_exe(), ipynb_file])
+    run([nbstripout_exe(), ipynb_file], check=True)
     ipynb_mtime_after = ipynb_file.stat().st_mtime_ns
 
     assert ipynb_mtime_after == ipynb_mtime_before
@@ -200,7 +200,7 @@ def test_nochange_notebook_unchanged():
     zpln_file = NOTEBOOKS_FOLDER / 'test_zeppelin.zpln.expected'
     zpln_mtime_before = zpln_file.stat().st_mtime_ns
 
-    run([nbstripout_exe(), '--force', '--mode', 'zeppelin', zpln_file])
+    run([nbstripout_exe(), '--force', '--mode', 'zeppelin', zpln_file], check=True)
     zpln_mtime_after = zpln_file.stat().st_mtime_ns
 
     assert zpln_mtime_after == zpln_mtime_before
@@ -212,13 +212,13 @@ def test_newline_behavior(tmp_path: Path):
     to_os_eol = tmp_path / 'should-have-os-eol.ipynb'
     to_os_eol.write_bytes(input_content)
 
-    run([nbstripout_exe(), to_os_eol])
+    run([nbstripout_exe(), to_os_eol], check=True)
     if sys.platform == 'win32':
         assert b'\r\n' in to_os_eol.read_bytes()
     else:
         assert b'\r\n' not in to_os_eol.read_bytes()
 
-    pc = run([nbstripout_exe(), '--textconv', to_os_eol], stdout=PIPE)
+    pc = run([nbstripout_exe(), '--textconv', to_os_eol], stdout=PIPE, check=True)
     if sys.platform == 'win32':
         assert b'\r\n' in pc.stdout
     else:
@@ -227,8 +227,8 @@ def test_newline_behavior(tmp_path: Path):
     to_lf_eol = tmp_path / 'should-have-lf-eol.ipynb'
     to_lf_eol.write_bytes(input_content)
 
-    run([nbstripout_exe(), '--unix-newlines', to_lf_eol])
+    run([nbstripout_exe(), '--unix-newlines', to_lf_eol], check=True)
     assert b'\r\n' not in to_lf_eol.read_bytes()
 
-    pc = run([nbstripout_exe(), '--unix-newlines', '--textconv', to_lf_eol], stdout=PIPE)
+    pc = run([nbstripout_exe(), '--unix-newlines', '--textconv', to_lf_eol], check=True, stdout=PIPE)
     assert b'\r\n' not in pc.stdout
