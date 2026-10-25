@@ -261,11 +261,12 @@ def install(
 def uninstall(git_config: str, install_location: str = INSTALL_LOCATION_LOCAL, attrfile: str | None = None) -> int:
     """Uninstall the git filter and unset the git attributes."""
     try:
-        call(git_config + ['--unset', 'filter.nbstripout.clean'], stdout=open(devnull, 'w'), stderr=STDOUT)
-        call(git_config + ['--unset', 'filter.nbstripout.smudge'], stdout=open(devnull, 'w'), stderr=STDOUT)
-        call(git_config + ['--unset', 'filter.nbstripout.required'], stdout=open(devnull, 'w'), stderr=STDOUT)
-        call(git_config + ['--remove-section', 'diff.ipynb'], stdout=open(devnull, 'w'), stderr=STDOUT)
-        attrfile = _get_attrfile(git_config, install_location, attrfile)
+        with open(devnull, 'w') as devnull_file:
+            call(git_config + ['--unset', 'filter.nbstripout.clean'], stdout=devnull_file, stderr=STDOUT)
+            call(git_config + ['--unset', 'filter.nbstripout.smudge'], stdout=devnull_file, stderr=STDOUT)
+            call(git_config + ['--unset', 'filter.nbstripout.required'], stdout=devnull_file, stderr=STDOUT)
+            call(git_config + ['--remove-section', 'diff.ipynb'], stdout=devnull_file, stderr=STDOUT)
+            attrfile = _get_attrfile(git_config, install_location, attrfile)
     except FileNotFoundError:
         print('Uninstall failed: git is not on path!', file=sys.stderr)
         return 1
