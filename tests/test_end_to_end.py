@@ -5,7 +5,6 @@ from pathlib import Path
 from re import Pattern
 from subprocess import PIPE, run
 
-# Note: typing.Pattern is deprecated, for removal in 3.13 in favour of re.Pattern introduced in 3.8
 import pytest
 
 NOTEBOOKS_FOLDER = Path('tests/e2e_notebooks')
@@ -96,7 +95,7 @@ def test_end_to_end_stdin(input_file: str, expected_file: str, args: list[str], 
         args = [nbstripout_exe()] + args
         if verify:
             args.append('--verify')
-        pc = run(args, stdin=f, stdout=PIPE, text=True, check=True)
+        pc = run(args, stdin=f, stdout=PIPE, text=True, check=False)
         output = pc.stdout
 
     if verify:
@@ -123,7 +122,7 @@ def test_end_to_end_file(input_file: str, expected_file: str, args: list[str], t
     args = [nbstripout_exe(), p] + args
     if verify:
         args.append('--verify')
-    pc = run(args, stdout=PIPE, text=True, check=True)
+    pc = run(args, stdout=PIPE, text=True, check=False)
 
     output = pc.stdout.strip()
     if verify:
@@ -150,7 +149,7 @@ def test_dry_run_stdin(input_file: str, extra_args: list[str], any_change: bool,
         args = [nbstripout_exe(), '--dry-run'] + extra_args
         if verify:
             args.append('--verify')
-        pc = run(args, stdin=f, stdout=PIPE, text=True, check=True)
+        pc = run(args, stdin=f, stdout=PIPE, text=True, check=False)
         output = pc.stdout
 
     assert output == (expected if any_change else '')
@@ -168,7 +167,7 @@ def test_dry_run_args(input_file: str, extra_args: list[str], any_change: bool, 
     ] + extra_args
     if verify:
         args.append('--verify')
-    pc = run(args, stdout=PIPE, text=True, check=True)
+    pc = run(args, stdout=PIPE, text=True, check=False)
     output = pc.stdout
 
     assert expected_regex.match(output) if any_change else output == ''
@@ -178,7 +177,7 @@ def test_dry_run_args(input_file: str, extra_args: list[str], any_change: bool, 
 @pytest.mark.parametrize('input_file, expected_errs, extra_args', ERR_OUTPUT_CASES)
 def test_make_errors(input_file: str, expected_errs: list[str | Pattern], extra_args: list[str]):
     with open(NOTEBOOKS_FOLDER / input_file, mode='r') as f:
-        pc = run([nbstripout_exe(), '--dry-run'] + extra_args, stdin=f, stderr=PIPE, text=True, check=True)
+        pc = run([nbstripout_exe(), '--dry-run'] + extra_args, stdin=f, stderr=PIPE, text=True, check=False)
         err_output = pc.stderr
 
     for e in expected_errs:
